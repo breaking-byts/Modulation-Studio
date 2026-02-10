@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signal Modulation Visualizer</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="hero">
+        <h1>Signal Modulation Visualizer</h1>
+        <p>
+          Explore modulation families, inspect equations, and compare modulation
+          with demodulation in time/frequency/constellation domains.
+        </p>
+      </header>
+
+      <section class="panel controls">
+        <h2>Controls</h2>
+        <div class="grid">
+          <label>
+            Modulation Family
+            <select id="family"></select>
+          </label>
+          <label>
+            Scheme
+            <select id="scheme"></select>
+          </label>
+          <label>
+            Baseband Signal
+            <select id="baseband"></select>
+          </label>
+          <label>
+            Carrier Frequency fc (Hz)
+            <input id="carrierFreq" type="number" value="200" min="20" max="2000" step="10" />
+          </label>
+          <label>
+            Message Frequency fm (Hz)
+            <input id="messageFreq" type="number" value="20" min="1" max="500" step="1" />
+          </label>
+          <label>
+            Carrier Amplitude Ac
+            <input id="carrierAmp" type="number" value="1" min="0.2" max="5" step="0.1" />
+          </label>
+          <label>
+            Message Amplitude Am
+            <input id="messageAmp" type="number" value="1" min="0.1" max="5" step="0.1" />
+          </label>
+          <label>
+            Modulation Index (mu / kp)
+            <input id="modIndex" type="number" value="0.7" min="0.1" max="5" step="0.1" />
+          </label>
+          <label>
+            Frequency Deviation kf (Hz)
+            <input id="freqDev" type="number" value="60" min="1" max="600" step="1" />
+          </label>
+          <label>
+            Bit Rate Rb (bps)
+            <input id="bitRate" type="number" value="100" min="10" max="1000" step="10" />
+          </label>
+          <label>
+            Duration (s)
+            <input id="duration" type="number" value="0.08" min="0.02" max="0.2" step="0.01" />
+          </label>
+          <label>
+            Channel SNR (dB)
+            <input id="snrDb" type="number" value="24" min="0" max="60" step="1" />
+          </label>
+          <label>
+            Fading Depth (0-1)
+            <input id="fadingDepth" type="number" value="0.25" min="0" max="0.95" step="0.05" />
+          </label>
+          <label>
+            RX Carrier Offset (Hz)
+            <input id="rxCarrierOffset" type="number" value="0" min="-300" max="300" step="1" />
+          </label>
+          <label>
+            RX Phase Offset (deg)
+            <input id="rxPhaseOffset" type="number" value="0" min="-180" max="180" step="1" />
+          </label>
+          <label class="checkbox">
+            <input id="compareMode" type="checkbox" />
+            Enable Comparison Mode
+          </label>
+          <label>
+            Compare Scheme
+            <select id="compareScheme" disabled></select>
+          </label>
+          <button id="refresh" type="button">Regenerate</button>
+        </div>
+      </section>
+
+      <section class="panel equations">
+        <h2>Equations</h2>
+        <p><strong>Baseband:</strong> <span id="basebandEq"></span></p>
+        <p><strong>Modulation:</strong> <span id="modEq"></span></p>
+        <p><strong>Demodulation:</strong> <span id="demodEq"></span></p>
+        <p><strong>Compare Modulation:</strong> <span id="compareModEq">N/A</span></p>
+        <p><strong>Compare Demodulation:</strong> <span id="compareDemodEq">N/A</span></p>
+      </section>
+
+      <section class="panel metrics">
+        <h2>Metrics</h2>
+        <p><strong>Primary:</strong> <span id="primaryMetrics"></span></p>
+        <p><strong>Comparison:</strong> <span id="compareMetrics">Disabled</span></p>
+      </section>
+
+      <section class="panel">
+        <h2>Modulation Hierarchy</h2>
+        <div id="taxonomy" class="taxonomy"></div>
+      </section>
+
+      <section class="plots">
+        <article class="panel">
+          <h3>Baseband (Time Domain)</h3>
+          <canvas id="basebandCanvas" width="720" height="240"></canvas>
+        </article>
+        <article class="panel">
+          <h3>Received Signal (After Channel)</h3>
+          <canvas id="modulatedCanvas" width="720" height="240"></canvas>
+        </article>
+        <article class="panel">
+          <h3>Demodulated Signal (Time Domain)</h3>
+          <canvas id="demodulatedCanvas" width="720" height="240"></canvas>
+        </article>
+        <article class="panel">
+          <h3>Frequency Spectrum (FFT Magnitude)</h3>
+          <canvas id="spectrumCanvas" width="720" height="240"></canvas>
+        </article>
+        <article class="panel" id="constellationPanel">
+          <h3>Constellation Plot (Digital Modulation)</h3>
+          <canvas id="constellationCanvas" width="720" height="260"></canvas>
+        </article>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

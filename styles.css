@@ -1,0 +1,142 @@
+:root {
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --ink: #1b1f2a;
+  --muted: #5f6880;
+  --line: #dbe2ef;
+  --accent: #1f6feb;
+  --accent-2: #e36209;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 10% 0%, #eaf2ff 0%, transparent 40%),
+    radial-gradient(circle at 95% 10%, #fff1e6 0%, transparent 35%),
+    var(--bg);
+}
+
+.app {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.hero p {
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.controls .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+}
+
+label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.5rem;
+}
+
+label.checkbox input {
+  width: auto;
+}
+
+input,
+select,
+button {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #c3cadd;
+  border-radius: 9px;
+  font-size: 0.92rem;
+  font-family: inherit;
+}
+
+button {
+  align-self: end;
+  border: 0;
+  color: #fff;
+  background: linear-gradient(120deg, var(--accent), #4d85ea);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover {
+  filter: brightness(1.05);
+}
+
+.taxonomy {
+  line-height: 1.7;
+}
+
+.taxonomy .family {
+  font-weight: 700;
+  margin-top: 0.4rem;
+}
+
+.taxonomy .children {
+  color: var(--muted);
+}
+
+.plots {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid #e7ecf5;
+  background:
+    linear-gradient(180deg, #fcfdff, #f9fbff);
+}
+
+.equations code {
+  background: #eef3ff;
+  padding: 0.05rem 0.25rem;
+  border-radius: 6px;
+}
+
+.metrics p {
+  margin: 0.5rem 0;
+}
+
+@media (max-width: 720px) {
+  .app {
+    padding: 0.9rem;
+  }
+
+  .hero h1 {
+    font-size: 1.6rem;
+  }
+}
