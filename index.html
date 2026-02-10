@@ -3,137 +3,279 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Signal Modulation Visualizer</title>
+    <meta
+      name="description"
+      content="Deployable web studio for visualizing analog and digital signal modulation and demodulation."
+    />
+    <title>Modulation Studio | Signal Playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="app">
-      <header class="hero">
-        <h1>Signal Modulation Visualizer</h1>
-        <p>
-          Explore modulation families, inspect equations, and compare modulation
-          with demodulation in time/frequency/constellation domains.
-        </p>
-      </header>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#top">Modulation Studio</a>
+        <nav class="topnav" aria-label="Main navigation">
+          <a href="#studio">Studio</a>
+          <a href="#scenarios">Scenarios</a>
+          <a href="#learn">Learn</a>
+        </nav>
+      </div>
+    </header>
 
-      <section class="panel controls">
-        <h2>Controls</h2>
-        <div class="grid">
-          <label>
-            Modulation Family
-            <select id="family"></select>
-          </label>
-          <label>
-            Scheme
-            <select id="scheme"></select>
-          </label>
-          <label>
-            Baseband Signal
-            <select id="baseband"></select>
-          </label>
-          <label>
-            Carrier Frequency fc (Hz)
-            <input id="carrierFreq" type="number" value="200" min="20" max="2000" step="10" />
-          </label>
-          <label>
-            Message Frequency fm (Hz)
-            <input id="messageFreq" type="number" value="20" min="1" max="500" step="1" />
-          </label>
-          <label>
-            Carrier Amplitude Ac
-            <input id="carrierAmp" type="number" value="1" min="0.2" max="5" step="0.1" />
-          </label>
-          <label>
-            Message Amplitude Am
-            <input id="messageAmp" type="number" value="1" min="0.1" max="5" step="0.1" />
-          </label>
-          <label>
-            Modulation Index (mu / kp)
-            <input id="modIndex" type="number" value="0.7" min="0.1" max="5" step="0.1" />
-          </label>
-          <label>
-            Frequency Deviation kf (Hz)
-            <input id="freqDev" type="number" value="60" min="1" max="600" step="1" />
-          </label>
-          <label>
-            Bit Rate Rb (bps)
-            <input id="bitRate" type="number" value="100" min="10" max="1000" step="10" />
-          </label>
-          <label>
-            Duration (s)
-            <input id="duration" type="number" value="0.08" min="0.02" max="0.2" step="0.01" />
-          </label>
-          <label>
-            Channel SNR (dB)
-            <input id="snrDb" type="number" value="24" min="0" max="60" step="1" />
-          </label>
-          <label>
-            Fading Depth (0-1)
-            <input id="fadingDepth" type="number" value="0.25" min="0" max="0.95" step="0.05" />
-          </label>
-          <label>
-            RX Carrier Offset (Hz)
-            <input id="rxCarrierOffset" type="number" value="0" min="-300" max="300" step="1" />
-          </label>
-          <label>
-            RX Phase Offset (deg)
-            <input id="rxPhaseOffset" type="number" value="0" min="-180" max="180" step="1" />
-          </label>
-          <label class="checkbox">
-            <input id="compareMode" type="checkbox" />
-            Enable Comparison Mode
-          </label>
-          <label>
-            Compare Scheme
-            <select id="compareScheme" disabled></select>
-          </label>
-          <button id="refresh" type="button">Regenerate</button>
+    <main class="app-shell" id="top">
+      <section class="hero panel-soft">
+        <div class="hero-copy">
+          <p class="eyebrow">Signal Systems Lab</p>
+          <h1>Design, disturb, demodulate, and compare modulation schemes live.</h1>
+          <p>
+            This deployable web app lets you tune analog and digital modulation,
+            inject channel impairments, and inspect waveform, spectrum, constellation,
+            and recovery quality in one workspace.
+          </p>
+          <div class="hero-actions">
+            <button id="starterPresetBtn" class="btn btn-primary" type="button">Load Starter Demo</button>
+            <a class="btn btn-ghost" href="#studio">Open Studio</a>
+          </div>
+        </div>
+        <div class="hero-stats" role="list" aria-label="Feature highlights">
+          <article class="stat" role="listitem">
+            <h2>9</h2>
+            <p>Modulation Schemes</p>
+          </article>
+          <article class="stat" role="listitem">
+            <h2>3</h2>
+            <p>Baseband Waveforms</p>
+          </article>
+          <article class="stat" role="listitem">
+            <h2>2</h2>
+            <p>Channel Distortion Models</p>
+          </article>
         </div>
       </section>
 
-      <section class="panel equations">
-        <h2>Equations</h2>
-        <p><strong>Baseband:</strong> <span id="basebandEq"></span></p>
-        <p><strong>Modulation:</strong> <span id="modEq"></span></p>
-        <p><strong>Demodulation:</strong> <span id="demodEq"></span></p>
-        <p><strong>Compare Modulation:</strong> <span id="compareModEq">N/A</span></p>
-        <p><strong>Compare Demodulation:</strong> <span id="compareDemodEq">N/A</span></p>
+      <section class="panel" id="studio">
+        <div class="studio-head">
+          <div>
+            <p class="eyebrow">Studio</p>
+            <h2>Interactive Modulation Workbench</h2>
+          </div>
+          <div class="status-wrap">
+            <span id="statusText" class="status info">Ready</span>
+            <span id="bandwidthEstimate" class="bandwidth">Estimated Occupied BW: --</span>
+          </div>
+        </div>
       </section>
 
-      <section class="panel metrics">
-        <h2>Metrics</h2>
-        <p><strong>Primary:</strong> <span id="primaryMetrics"></span></p>
-        <p><strong>Comparison:</strong> <span id="compareMetrics">Disabled</span></p>
+      <section class="studio-layout">
+        <aside class="panel controls-panel">
+          <h3>Controls</h3>
+          <div class="fieldset-grid">
+            <fieldset>
+              <legend>Signal Setup</legend>
+              <label>
+                Modulation Family
+                <select id="family"></select>
+              </label>
+              <label>
+                Scheme
+                <select id="scheme"></select>
+              </label>
+              <label>
+                Baseband Signal
+                <select id="baseband"></select>
+              </label>
+              <label>
+                Carrier Frequency fc (Hz)
+                <input id="carrierFreq" type="number" value="250" min="20" max="2200" step="10" />
+              </label>
+              <label>
+                Message Frequency fm (Hz)
+                <input id="messageFreq" type="number" value="20" min="1" max="500" step="1" />
+              </label>
+              <label>
+                Carrier Amplitude Ac
+                <input id="carrierAmp" type="number" value="1" min="0.2" max="5" step="0.1" />
+              </label>
+              <label>
+                Message Amplitude Am
+                <input id="messageAmp" type="number" value="1" min="0.1" max="5" step="0.1" />
+              </label>
+              <label>
+                Modulation Index (mu / kp)
+                <input id="modIndex" type="number" value="0.8" min="0.1" max="5" step="0.1" />
+              </label>
+              <label>
+                Frequency Deviation kf (Hz)
+                <input id="freqDev" type="number" value="60" min="1" max="600" step="1" />
+              </label>
+              <label>
+                Bit Rate Rb (bps)
+                <input id="bitRate" type="number" value="120" min="10" max="2000" step="10" />
+              </label>
+              <label>
+                Duration (s)
+                <input id="duration" type="number" value="0.08" min="0.02" max="0.4" step="0.01" />
+              </label>
+            </fieldset>
+
+            <fieldset>
+              <legend>Channel + Receiver</legend>
+              <label>
+                Channel SNR (dB)
+                <input id="snrDb" type="number" value="24" min="0" max="60" step="1" />
+              </label>
+              <label>
+                Fading Depth (0-1)
+                <input id="fadingDepth" type="number" value="0.25" min="0" max="0.95" step="0.05" />
+              </label>
+              <label>
+                RX Carrier Offset (Hz)
+                <input id="rxCarrierOffset" type="number" value="0" min="-300" max="300" step="1" />
+              </label>
+              <label>
+                RX Phase Offset (deg)
+                <input id="rxPhaseOffset" type="number" value="0" min="-180" max="180" step="1" />
+              </label>
+            </fieldset>
+
+            <fieldset>
+              <legend>Comparison</legend>
+              <label class="checkbox-row">
+                <input id="compareMode" type="checkbox" />
+                Enable Comparison Mode
+              </label>
+              <label>
+                Compare Scheme
+                <select id="compareScheme" disabled></select>
+              </label>
+            </fieldset>
+
+            <fieldset>
+              <legend>Session Tools</legend>
+              <label>
+                Preset Name
+                <input id="presetName" type="text" placeholder="e.g. noisy-qpsk-lab" />
+              </label>
+              <label>
+                Saved Presets
+                <select id="savedPresetSelect">
+                  <option value="">No presets saved</option>
+                </select>
+              </label>
+              <div class="button-row">
+                <button id="refresh" class="btn btn-primary" type="button">Regenerate</button>
+                <button id="resetDefaults" class="btn btn-secondary" type="button">Reset Defaults</button>
+                <button id="savePreset" class="btn btn-secondary" type="button">Save Preset</button>
+                <button id="loadPreset" class="btn btn-secondary" type="button">Load Preset</button>
+                <button id="deletePreset" class="btn btn-danger" type="button">Delete Preset</button>
+                <button id="exportCsv" class="btn btn-secondary" type="button">Export CSV</button>
+                <button id="exportPng" class="btn btn-secondary" type="button">Export PNG</button>
+              </div>
+            </fieldset>
+          </div>
+        </aside>
+
+        <section class="panel insights-panel">
+          <h3>Equations</h3>
+          <p><strong>Baseband:</strong> <span id="basebandEq"></span></p>
+          <p><strong>Modulation:</strong> <span id="modEq"></span></p>
+          <p><strong>Demodulation:</strong> <span id="demodEq"></span></p>
+          <p><strong>Compare Modulation:</strong> <span id="compareModEq">N/A</span></p>
+          <p><strong>Compare Demodulation:</strong> <span id="compareDemodEq">N/A</span></p>
+
+          <h3>Metrics</h3>
+          <p><strong>Primary:</strong> <span id="primaryMetrics"></span></p>
+          <p><strong>Comparison:</strong> <span id="compareMetrics">Disabled</span></p>
+
+          <h3>Plot Legend</h3>
+          <div id="plotLegend" class="legend-list"></div>
+
+          <h3>Modulation Hierarchy</h3>
+          <div id="taxonomy" class="taxonomy"></div>
+        </section>
       </section>
 
-      <section class="panel">
-        <h2>Modulation Hierarchy</h2>
-        <div id="taxonomy" class="taxonomy"></div>
+      <section class="panel" id="scenarios">
+        <div class="section-head">
+          <h2>Scenario Presets</h2>
+          <p>Start quickly with curated parameter sets and then customize.</p>
+        </div>
+        <div class="scenario-grid">
+          <article class="scenario-card">
+            <h3>Clean Analog Link</h3>
+            <p>Conventional AM with high SNR and no receiver mismatch.</p>
+            <button class="btn btn-secondary scenario-btn" data-scenario="cleanAnalog" type="button">
+              Apply Scenario
+            </button>
+          </article>
+          <article class="scenario-card">
+            <h3>Noisy BPSK</h3>
+            <p>Digital link with low SNR to expose BER impact and recovery limits.</p>
+            <button class="btn btn-secondary scenario-btn" data-scenario="noisyBpsk" type="button">
+              Apply Scenario
+            </button>
+          </article>
+          <article class="scenario-card">
+            <h3>Carrier Offset Stress</h3>
+            <p>QPSK with receiver frequency and phase mismatch for impairment study.</p>
+            <button class="btn btn-secondary scenario-btn" data-scenario="offsetQpsk" type="button">
+              Apply Scenario
+            </button>
+          </article>
+          <article class="scenario-card">
+            <h3>Wideband FM</h3>
+            <p>FM with larger deviation to observe Carson bandwidth expansion.</p>
+            <button class="btn btn-secondary scenario-btn" data-scenario="wideFm" type="button">
+              Apply Scenario
+            </button>
+          </article>
+        </div>
       </section>
 
-      <section class="plots">
-        <article class="panel">
+      <section class="plot-grid">
+        <article class="panel plot-card">
           <h3>Baseband (Time Domain)</h3>
           <canvas id="basebandCanvas" width="720" height="240"></canvas>
         </article>
-        <article class="panel">
+        <article class="panel plot-card">
           <h3>Received Signal (After Channel)</h3>
           <canvas id="modulatedCanvas" width="720" height="240"></canvas>
         </article>
-        <article class="panel">
+        <article class="panel plot-card">
           <h3>Demodulated Signal (Time Domain)</h3>
           <canvas id="demodulatedCanvas" width="720" height="240"></canvas>
         </article>
-        <article class="panel">
+        <article class="panel plot-card">
           <h3>Frequency Spectrum (FFT Magnitude)</h3>
           <canvas id="spectrumCanvas" width="720" height="240"></canvas>
         </article>
-        <article class="panel" id="constellationPanel">
-          <h3>Constellation Plot (Digital Modulation)</h3>
+        <article class="panel plot-card" id="constellationPanel">
+          <h3>Constellation Plot</h3>
           <canvas id="constellationCanvas" width="720" height="260"></canvas>
         </article>
       </section>
+
+      <section id="learn" class="panel">
+        <div class="section-head">
+          <h2>Modulation Atlas</h2>
+          <p>Reference view of family groupings and equations used in the simulator.</p>
+        </div>
+        <div id="atlas" class="atlas-grid"></div>
+      </section>
     </main>
+
+    <footer class="footer">
+      <p>
+        Built for deployment as a static site on Netlify, Vercel, or GitHub Pages.
+      </p>
+    </footer>
+
     <script src="./app.js"></script>
   </body>
 </html>
