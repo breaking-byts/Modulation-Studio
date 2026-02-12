@@ -1,6 +1,15 @@
 const SAMPLE_RATE = 8000;
 const PRESET_STORAGE_KEY = "modulationStudio.presets.v1";
 
+function renderLatex(latex) {
+  if (typeof katex === "undefined") return latex;
+  try {
+    return katex.renderToString(latex, { throwOnError: false, displayMode: false });
+  } catch (_e) {
+    return latex;
+  }
+}
+
 const modulationFamilies = [
   {
     id: "amplitude",
@@ -10,15 +19,15 @@ const modulationFamilies = [
         id: "am_dsb_lc",
         label: "AM DSB-LC (Conventional AM)",
         digital: false,
-        modulationEq: "s(t) = Ac [1 + mu * m_n(t)] cos(2*pi*fc*t)",
-        demodEq: "m_hat(t) ~= LPF{|r(t)|} - DC",
+        modulationEq: "s(t) = A_c [1 + \\mu \\cdot m_n(t)] \\cos(2\\pi f_c t)",
+        demodEq: "\\hat{m}(t) \\approx \\text{LPF}\\{|r(t)|\\} - \\text{DC}",
       },
       {
         id: "am_dsb_sc",
         label: "AM DSB-SC",
         digital: false,
-        modulationEq: "s(t) = Ac * m_n(t) * cos(2*pi*fc*t)",
-        demodEq: "m_hat(t) = LPF{2 r(t) cos(2*pi*frx*t + phi_rx)}",
+        modulationEq: "s(t) = A_c \\cdot m_n(t) \\cdot \\cos(2\\pi f_c t)",
+        demodEq: "\\hat{m}(t) = \\text{LPF}\\{2 r(t) \\cos(2\\pi f_{rx} t + \\phi_{rx})\\}",
       },
     ],
   },
@@ -30,15 +39,15 @@ const modulationFamilies = [
         id: "fm",
         label: "Frequency Modulation (FM)",
         digital: false,
-        modulationEq: "s(t) = Ac cos(2*pi*fc*t + 2*pi*kf * integral(m_n(t) dt))",
-        demodEq: "m_hat(t) = (f_inst(t) - frx)/kf, f_inst = (1/2*pi) dphi/dt",
+        modulationEq: "s(t) = A_c \\cos\\left(2\\pi f_c t + 2\\pi k_f \\int m_n(t)\\,dt\\right)",
+        demodEq: "\\hat{m}(t) = \\frac{f_{inst}(t) - f_{rx}}{k_f}, \\quad f_{inst} = \\frac{1}{2\\pi}\\frac{d\\phi}{dt}",
       },
       {
         id: "pm",
         label: "Phase Modulation (PM)",
         digital: false,
-        modulationEq: "s(t) = Ac cos(2*pi*fc*t + kp * m_n(t))",
-        demodEq: "m_hat(t) = (phi(t) - 2*pi*frx*t) / kp",
+        modulationEq: "s(t) = A_c \\cos(2\\pi f_c t + k_p \\cdot m_n(t))",
+        demodEq: "\\hat{m}(t) = \\frac{\\phi(t) - 2\\pi f_{rx} t}{k_p}",
       },
     ],
   },
@@ -50,36 +59,36 @@ const modulationFamilies = [
         id: "ask",
         label: "ASK (Binary)",
         digital: true,
-        modulationEq: "s(t) = Ac [a0 + a1*b(k)] cos(2*pi*fc*t)",
-        demodEq: "b_hat(k) = threshold{integral r(t) cos(2*pi*frx*t + phi_rx) dt}",
+        modulationEq: "s(t) = A_c [a_0 + a_1 \\cdot b(k)] \\cos(2\\pi f_c t)",
+        demodEq: "\\hat{b}(k) = \\text{threshold}\\left\\{\\int r(t) \\cos(2\\pi f_{rx} t + \\phi_{rx})\\,dt\\right\\}",
       },
       {
         id: "fsk",
         label: "FSK (Binary)",
         digital: true,
-        modulationEq: "s(t) = Ac cos(2*pi*f_i*t), f_i in {fc-df, fc+df}",
-        demodEq: "b_hat(k) = argmax_i integral r(t) cos(2*pi*f_i_rx*t) dt",
+        modulationEq: "s(t) = A_c \\cos(2\\pi f_i t), \\quad f_i \\in \\{f_c-\\Delta f, f_c+\\Delta f\\}",
+        demodEq: "\\hat{b}(k) = \\arg\\max_i \\int r(t) \\cos(2\\pi f_{i,rx} t)\\,dt",
       },
       {
         id: "bpsk",
         label: "BPSK",
         digital: true,
-        modulationEq: "s(t) = Ac cos(2*pi*fc*t + pi*(1-b(k)))",
-        demodEq: "b_hat(k) = sign{integral r(t) cos(2*pi*frx*t + phi_rx) dt}",
+        modulationEq: "s(t) = A_c \\cos(2\\pi f_c t + \\pi(1-b(k)))",
+        demodEq: "\\hat{b}(k) = \\text{sign}\\left\\{\\int r(t) \\cos(2\\pi f_{rx} t + \\phi_{rx})\\,dt\\right\\}",
       },
       {
         id: "qpsk",
         label: "QPSK",
         digital: true,
-        modulationEq: "s(t) = Ac[I_k cos(2*pi*fc*t) - Q_k sin(2*pi*fc*t)]",
-        demodEq: "I_hat,Q_hat from coherent I/Q integrators",
+        modulationEq: "s(t) = A_c[I_k \\cos(2\\pi f_c t) - Q_k \\sin(2\\pi f_c t)]",
+        demodEq: "\\hat{I}, \\hat{Q} \\text{ from coherent I/Q integrators}",
       },
       {
         id: "qam16",
         label: "16-QAM",
         digital: true,
-        modulationEq: "s(t) = Ac[I_k cos(2*pi*fc*t) - Q_k sin(2*pi*fc*t)], I,Q in {-3,-1,1,3}",
-        demodEq: "Nearest-neighbor symbol decision in I/Q plane",
+        modulationEq: "s(t) = A_c[I_k \\cos(2\\pi f_c t) - Q_k \\sin(2\\pi f_c t)], \\quad I,Q \\in \\{-3,-1,1,3\\}",
+        demodEq: "\\text{Nearest-neighbor symbol decision in I/Q plane}",
       },
     ],
   },
@@ -89,19 +98,19 @@ const basebandSignals = [
   {
     id: "sine",
     label: "Sine Wave",
-    equation: "m(t) = Am sin(2*pi*fm*t)",
+    equation: "m(t) = A_m \\sin(2\\pi f_m t)",
     generator: (t, am, fm) => am * Math.sin(2 * Math.PI * fm * t),
   },
   {
     id: "square",
     label: "Square Wave",
-    equation: "m(t) = Am sgn(sin(2*pi*fm*t))",
+    equation: "m(t) = A_m \\cdot \\text{sgn}(\\sin(2\\pi f_m t))",
     generator: (t, am, fm) => am * (Math.sin(2 * Math.PI * fm * t) >= 0 ? 1 : -1),
   },
   {
     id: "triangle",
     label: "Triangle Wave",
-    equation: "m(t) = (2*Am/pi) asin(sin(2*pi*fm*t))",
+    equation: "m(t) = \\frac{2A_m}{\\pi} \\arcsin(\\sin(2\\pi f_m t))",
     generator: (t, am, fm) => (2 * am / Math.PI) * Math.asin(Math.sin(2 * Math.PI * fm * t)),
   },
 ];
@@ -364,7 +373,7 @@ function renderAtlas() {
           ${family.schemes
           .map(
             (scheme) =>
-              `<li><strong>${scheme.label}</strong><span class="eq">${scheme.modulationEq}</span><span class="eq">${scheme.demodEq}</span></li>`,
+              `<li><strong>${scheme.label}</strong><span class="eq">${renderLatex(scheme.modulationEq)}</span><span class="eq">${renderLatex(scheme.demodEq)}</span></li>`,
           )
           .join("")}
         </ul>
@@ -1450,13 +1459,14 @@ function render() {
     const primary = runScheme(primaryScheme, t, params, basebandDef, sharedBits);
     const compare = compareScheme ? runScheme(compareScheme, t, params, basebandDef, sharedBits) : null;
 
-    els.basebandEq.textContent = primaryScheme.digital
-      ? "m(t) = sum_k b(k) p(t-kTb), b(k) in {0,1}"
-      : basebandDef.equation;
-    els.modEq.textContent = primaryScheme.modulationEq;
-    els.demodEq.textContent = primaryScheme.demodEq;
-    els.compareModEq.textContent = compareScheme ? compareScheme.modulationEq : "N/A";
-    els.compareDemodEq.textContent = compareScheme ? compareScheme.demodEq : "N/A";
+    const digitalBasebandEq = "m(t) = \\sum_k b(k) p(t-kT_b), \\quad b(k) \\in \\{0,1\\}";
+    els.basebandEq.innerHTML = primaryScheme.digital
+      ? renderLatex(digitalBasebandEq)
+      : renderLatex(basebandDef.equation);
+    els.modEq.innerHTML = renderLatex(primaryScheme.modulationEq);
+    els.demodEq.innerHTML = renderLatex(primaryScheme.demodEq);
+    els.compareModEq.innerHTML = compareScheme ? renderLatex(compareScheme.modulationEq) : "N/A";
+    els.compareDemodEq.innerHTML = compareScheme ? renderLatex(compareScheme.demodEq) : "N/A";
 
     els.primaryMetrics.textContent = formatMetricText(primary, primaryScheme);
     els.compareMetrics.textContent = compareScheme
