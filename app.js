@@ -179,16 +179,16 @@ const scenarioPresets = {
 };
 
 const colors = {
-  primaryBase: "#0f7bff",
-  compareBase: "#f97316",
-  primaryRx: "#0a8f63",
-  compareRx: "#d97706",
-  primaryDemod: "#bf5408",
-  compareDemod: "#7c3aed",
-  spectrumPrimary: "#f97316",
-  spectrumCompare: "#0f7bff",
-  constellationPrimary: "#0f7bff",
-  constellationCompare: "#f97316",
+  primaryBase: "#00ff9c",
+  compareBase: "#ff9c00",
+  primaryRx: "#00e676",
+  compareRx: "#ffab40",
+  primaryDemod: "#40c4ff",
+  compareDemod: "#ea80fc",
+  spectrumPrimary: "#00ff9c",
+  spectrumCompare: "#ff9c00",
+  constellationPrimary: "#00ff9c",
+  constellationCompare: "#ff9c00",
 };
 
 const allSchemes = modulationFamilies.flatMap((family) =>
@@ -262,6 +262,13 @@ let lastRenderData = null;
 function setStatus(type, message) {
   els.statusText.className = `status ${type}`;
   els.statusText.textContent = message;
+  // GSAP status pulse
+  if (typeof gsap !== "undefined") {
+    gsap.fromTo(els.statusText,
+      { boxShadow: "0 0 0 0 rgba(0,255,156,0.22)" },
+      { boxShadow: "0 0 14px 2px rgba(0,255,156,0.22)", duration: 0.3, yoyo: true, repeat: 1, ease: "power2.out" }
+    );
+  }
 }
 
 function clamp(value, min, max) {
@@ -355,11 +362,11 @@ function renderAtlas() {
         <h3>${family.name}</h3>
         <ul>
           ${family.schemes
-            .map(
-              (scheme) =>
-                `<li><strong>${scheme.label}</strong><span class="eq">${scheme.modulationEq}</span><span class="eq">${scheme.demodEq}</span></li>`,
-            )
-            .join("")}
+          .map(
+            (scheme) =>
+              `<li><strong>${scheme.label}</strong><span class="eq">${scheme.modulationEq}</span><span class="eq">${scheme.demodEq}</span></li>`,
+          )
+          .join("")}
         </ul>
       </article>
     `,
@@ -628,7 +635,7 @@ function drawLinePlot(canvas, series) {
   ctx.clearRect(0, 0, width, height);
   const pad = 22;
 
-  ctx.strokeStyle = "#d2deef";
+  ctx.strokeStyle = "#1f2b1f";
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(pad, height / 2);
@@ -664,7 +671,7 @@ function drawXYPlot(canvas, xList, yList, colorsList) {
   ctx.clearRect(0, 0, width, height);
   const pad = 22;
 
-  ctx.strokeStyle = "#d2deef";
+  ctx.strokeStyle = "#1f2b1f";
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(pad, height - pad);
@@ -703,7 +710,7 @@ function drawConstellation(canvas, groups) {
   const pad = 24;
   ctx.clearRect(0, 0, width, height);
 
-  ctx.strokeStyle = "#d2deef";
+  ctx.strokeStyle = "#1f2b1f";
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(width / 2, pad);
@@ -714,9 +721,9 @@ function drawConstellation(canvas, groups) {
 
   const flat = groups.flatMap((g) => g.points);
   if (!flat.length) {
-    ctx.fillStyle = "#5c667f";
-    ctx.font = "14px IBM Plex Sans";
-    ctx.fillText("Constellation is available for digital schemes.", 34, height / 2);
+    ctx.fillStyle = "#7aa57a";
+    ctx.font = "13px JetBrains Mono, monospace";
+    ctx.fillText("// constellation available for digital schemes", 34, height / 2);
     return;
   }
 
@@ -1535,6 +1542,12 @@ function bindEvents() {
   els.compareMode.addEventListener("change", render);
   els.compareScheme.addEventListener("change", render);
 
+  let _debounceTimer = null;
+  const debouncedRender = () => {
+    clearTimeout(_debounceTimer);
+    _debounceTimer = setTimeout(render, 60);
+  };
+
   [
     "carrierFreq",
     "messageFreq",
@@ -1549,7 +1562,7 @@ function bindEvents() {
     "rxCarrierOffset",
     "rxPhaseOffset",
   ].forEach((id) => {
-    els[id].addEventListener("input", render);
+    els[id].addEventListener("input", debouncedRender);
   });
 
   els.refresh.addEventListener("click", render);
@@ -1598,6 +1611,50 @@ function init() {
   applyControlState(defaultControls, true);
   bindEvents();
   render();
+
+  // --- GSAP ANIMATIONS ---
+  if (typeof gsap !== "undefined") {
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Boot sequence — staggered section reveal
+    const sections = document.querySelectorAll("[data-section]");
+    gsap.to(sections, {
+      opacity: 1,
+      y: 0,
+      duration: 0.5,
+      stagger: 0.1,
+      ease: "power2.out",
+      delay: 0.1
+    });
+
+    // Glitch effect on hero headline — fires once
+    const heroH1 = document.querySelector(".hero-copy h1");
+    if (heroH1) {
+      const glitchTL = gsap.timeline({ delay: 0.8 });
+      glitchTL
+        .to(heroH1, { x: -2, y: 1, textShadow: "2px 0 #ff003c, -2px 0 #00fff2", duration: 0.08, ease: "power4.in" })
+        .to(heroH1, { x: 2, y: -1, textShadow: "-2px 0 #ff003c, 2px 0 #00fff2", duration: 0.08, ease: "power4.out" })
+        .to(heroH1, { x: -1, y: 2, duration: 0.06, ease: "none" })
+        .to(heroH1, { x: 0, y: 0, textShadow: "none", duration: 0.1, ease: "power2.out" });
+    }
+
+    // Scroll-triggered reveals for below-fold sections
+    sections.forEach((el) => {
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 88%",
+        once: true,
+        onEnter: () => {
+          gsap.to(el, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" });
+        }
+      });
+    });
+  }
+
+  // Topbar scrolled state
+  window.addEventListener("scroll", () => {
+    document.body.classList.toggle("scrolled", window.scrollY > 40);
+  }, { passive: true });
 }
 
 init();
