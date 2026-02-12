@@ -1032,10 +1032,25 @@ canvas:hover {
 /* Equations in cyan for syntax distinction */
 .atlas-card .eq {
   display: block;
-  margin-top: var(--sp-1);
+  margin-top: var(--sp-2);
+  margin-bottom: var(--sp-1);
   color: var(--cyan);
-  font-size: var(--fs-xs);
-  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+}
+
+.katex {
+  color: var(--cyan);
+  font-size: 0.95em;
+}
+
+.insights-panel .katex {
+  color: var(--ink-bright);
+  font-size: var(--fs-sm);
+}
+
+.insights-panel p span {
+  display: inline-block;
+  margin-left: var(--sp-1);
 }
 
 /* ============================================================
