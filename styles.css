@@ -1048,7 +1048,7 @@ canvas:hover {
   font-size: var(--fs-sm);
 }
 
-.insights-panel p span {
+.insights-panel p > span {
   display: inline-block;
   margin-left: var(--sp-1);
 }
