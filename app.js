@@ -267,6 +267,7 @@ const scenarioButtons = Array.from(document.querySelectorAll(".scenario-btn"));
 
 let savedPresets = {};
 let lastRenderData = null;
+let renderFrameId = null;
 
 function setStatus(type, message) {
   els.statusText.className = `status ${type}`;
@@ -1441,6 +1442,16 @@ function exportCurrentPng() {
 }
 
 function render() {
+  if (renderFrameId !== null) {
+    cancelAnimationFrame(renderFrameId);
+  }
+  renderFrameId = requestAnimationFrame(() => {
+    renderFrameId = null;
+    performRender();
+  });
+}
+
+function performRender() {
   try {
     const primaryScheme = getSchemeById(els.scheme.value);
     if (!primaryScheme) return;
