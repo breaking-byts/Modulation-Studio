@@ -1038,12 +1038,28 @@ canvas:hover {
   font-size: var(--fs-sm);
 }
 
-.katex {
+.katex,
+.katex * {
   color: var(--cyan);
   font-size: 0.95em;
+  font-family: KaTeX_Main, "Times New Roman", serif !important;
 }
 
-.insights-panel .katex {
+.katex .mathit,
+.katex .mathbf {
+  font-family: KaTeX_Math, KaTeX_Main, "Times New Roman", serif !important;
+}
+
+.katex .mathsf {
+  font-family: KaTeX_SansSerif, sans-serif !important;
+}
+
+.katex .mathtt {
+  font-family: KaTeX_Typewriter, monospace !important;
+}
+
+.insights-panel .katex,
+.insights-panel .katex * {
   color: var(--ink-bright);
   font-size: var(--fs-sm);
 }
