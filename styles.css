@@ -282,6 +282,18 @@ h3 {
   width: 100%;
 }
 
+.topnav a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
 /* ============================================================
    APP SHELL — section rhythm via owl
    ============================================================ */
@@ -652,6 +664,14 @@ select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: var(--inset), var(--glow-soft);
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+  box-shadow: var(--inset), var(--glow-medium);
 }
 
 /* ============================================================
