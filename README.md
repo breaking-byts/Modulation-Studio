@@ -1,56 +1,77 @@
 # Modulation Studio
 
-Deployable web application for visualizing analog and digital modulation, channel impairments, and demodulation recovery quality.
+A terminal-style web application for visualizing analog and digital signal modulation, channel impairments, and demodulation recovery.
 
-## What Is Included
-- Modulation hierarchy under umbrella families:
-  - Amplitude: AM DSB-LC, AM DSB-SC
-  - Angle: FM, PM
-  - Digital: ASK, FSK, BPSK, QPSK, 16-QAM
-- Three baseband signal models with equations:
-  - Sine: `m(t) = Am sin(2*pi*fm*t)`
-  - Square: `m(t) = Am sgn(sin(2*pi*fm*t))`
-  - Triangle: `m(t) = (2*Am/pi) asin(sin(2*pi*fm*t))`
-- Per-scheme modulation and demodulation equations.
-- Channel impairment model:
-  - AWGN (SNR dB)
-  - Fading depth
-  - Receiver carrier/phase mismatch
-- Visual outputs:
-  - Baseband waveform
-  - Received waveform
-  - Demodulated waveform
-  - FFT magnitude spectrum
-  - Constellation plot (digital)
-- Recovery metrics:
-  - BER / SER for digital schemes
-  - Correlation for analog schemes
-- Side-by-side comparison mode.
-- Scenario cards (curated lab presets).
-- Save/load/delete custom presets in browser local storage.
-- Export tools:
-  - CSV signal dump
-  - PNG composite of plots
-- Modulation atlas section for quick learning/reference.
+**Live Demo:** [https://breaking-byts.github.io/PCS/](https://breaking-byts.github.io/PCS/)
 
-## Local Run
-1. In `/Users/leelanshkharbanda/codex/PCS`, run:
-   - `npm run dev`
-2. Open `http://localhost:4173`.
+![Modulation Studio Screenshot](https://via.placeholder.com/800x400?text=Modulation+Studio)
 
-You can also open `/Users/leelanshkharbanda/codex/PCS/index.html` directly.
+## Features
 
-## Deploy
-- Netlify: `netlify.toml` included (publish `.`)
-- Vercel: `vercel.json` included
-- Generic static hosting: upload all project files as-is
+### Modulation Schemes
+- **Amplitude:** AM DSB-LC, AM DSB-SC
+- **Angle:** FM, PM
+- **Digital:** ASK, FSK, BPSK, QPSK, 16-QAM
 
-Detailed steps are in `/Users/leelanshkharbanda/codex/PCS/DEPLOYMENT.md`.
+### Baseband Signals
+- Sine: `m(t) = Am sin(2πfm t)`
+- Square: `m(t) = Am sgn(sin(2πfm t))`
+- Triangle: `m(t) = (2Am/π) asin(sin(2πfm t))`
 
-## Main Files
-- `/Users/leelanshkharbanda/codex/PCS/index.html`
-- `/Users/leelanshkharbanda/codex/PCS/styles.css`
-- `/Users/leelanshkharbanda/codex/PCS/app.js`
-- `/Users/leelanshkharbanda/codex/PCS/package.json`
-- `/Users/leelanshkharbanda/codex/PCS/netlify.toml`
-- `/Users/leelanshkharbanda/codex/PCS/vercel.json`
+### Channel Impairments
+- AWGN (adjustable SNR)
+- Fading depth
+- Receiver carrier/phase offset
+
+### Visualizations
+- Baseband waveform
+- Received signal (after channel)
+- Demodulated signal
+- FFT magnitude spectrum
+- Constellation plot (digital schemes)
+
+### Metrics
+- BER/SER for digital schemes
+- Correlation coefficient for analog schemes
+
+### Tools
+- Side-by-side comparison mode
+- Scenario presets for quick demos
+- Save/load custom presets (localStorage)
+- Export to CSV and PNG
+
+## Quick Start
+
+Open `index.html` directly in your browser, or run a local server:
+
+```bash
+npm run dev
+# Open http://localhost:4173
+```
+
+## Deployment
+
+Ready for static hosting:
+
+| Platform | Config |
+|----------|--------|
+| GitHub Pages | Just push to `master` |
+| Vercel | `vercel.json` included |
+| Netlify | `netlify.toml` included |
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+## Project Structure
+
+```
+├── index.html      # Main entry point
+├── app.js          # Application logic
+├── styles.css      # Styling
+├── vercel.json     # Vercel config
+├── netlify.toml    # Netlify config
+└── package.json    # Metadata
+```
+
+## License
+
+MIT
