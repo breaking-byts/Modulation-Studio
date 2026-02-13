@@ -45,6 +45,7 @@ A terminal-style web application for visualizing analog and digital signal modul
 Open `index.html` directly in your browser, or run a local server:
 
 ```bash
+npm install
 npm run dev
 # Open http://localhost:4173
 ```
@@ -64,12 +65,19 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
 ## Project Structure
 
 ```
-├── index.html      # Main entry point
-├── app.js          # Application logic
-├── styles.css      # Styling
-├── vercel.json     # Vercel config
-├── netlify.toml    # Netlify config
-└── package.json    # Metadata
+├── index.html         # Main entry point
+├── js/
+│   ├── main.js        # App bootstrap and initialization
+│   ├── ui.js          # UI state, controls, and event binding
+│   ├── signal.js      # Modulation, channel, and demodulation logic
+│   ├── render.js      # Canvas drawing and plot composition
+│   ├── utils.js       # Shared math and helper utilities
+│   └── config.js      # Schemes, defaults, and constants
+├── vendor/            # Vendored third-party browser assets (GSAP, KaTeX)
+├── styles.css         # Styling
+├── vercel.json        # Vercel config + security headers
+├── netlify.toml       # Netlify config + security headers
+└── package.json       # Scripts and dependencies
 ```
 
 ## License

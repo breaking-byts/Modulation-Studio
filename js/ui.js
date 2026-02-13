@@ -6,6 +6,7 @@ import {
   scenarioPresets,
   colors,
   allSchemes,
+  SAMPLE_RATE,
 } from './config.js';
 import { renderLatex, clamp, formatHz, nowStamp, linspace, normalize } from './utils.js';
 import { generateAnalog, generateDigital, randomBits, computeBitErrorRate, computeSymbolErrorRate, computeCorrelation } from './signal.js';
@@ -535,7 +536,7 @@ function performRender(levelToBitsMap) {
     if (!primaryScheme) return;
 
     const params = getRenderParams();
-    const t = linspace(params.duration, 8000);
+    const t = linspace(params.duration, SAMPLE_RATE);
     const basebandDef = basebandSignals.find((b) => b.id === els.baseband.value) || basebandSignals[0];
 
     const compareActive = els.compareMode.checked;
@@ -583,7 +584,6 @@ function performRender(levelToBitsMap) {
       { primary, compare },
       primaryScheme,
       compareScheme,
-      compareActive
     );
 
     els.constellationPanel.style.display = hasConstellation ? "block" : "none";

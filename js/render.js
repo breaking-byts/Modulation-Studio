@@ -1,5 +1,5 @@
 import { computeSpectrum, normalize } from './utils.js';
-import { colors } from './config.js';
+import { colors, SAMPLE_RATE } from './config.js';
 
 export function drawLinePlot(canvas, series) {
   const ctx = canvas.getContext("2d");
@@ -114,7 +114,7 @@ export function drawConstellation(canvas, groups) {
   });
 }
 
-export function renderPlots(cvs, data, primaryScheme, compareScheme, compareActive) {
+export function renderPlots(cvs, data, primaryScheme, compareScheme) {
   drawLinePlot(cvs.basebandCanvas, [
     { data: normalize(data.primary.baseband), color: colors.primaryBase },
     ...(data.compare
@@ -136,12 +136,12 @@ export function renderPlots(cvs, data, primaryScheme, compareScheme, compareActi
       : []),
   ]);
 
-  const primarySpectrum = computeSpectrum(data.primary.rxSignal, 8000);
+  const primarySpectrum = computeSpectrum(data.primary.rxSignal, SAMPLE_RATE);
   const xList = [primarySpectrum.freq];
   const yList = [primarySpectrum.magDb];
   const cList = [colors.spectrumPrimary];
   if (data.compare) {
-    const compareSpectrum = computeSpectrum(data.compare.rxSignal, 8000);
+    const compareSpectrum = computeSpectrum(data.compare.rxSignal, SAMPLE_RATE);
     xList.push(compareSpectrum.freq);
     yList.push(compareSpectrum.magDb);
     cList.push(colors.spectrumCompare);

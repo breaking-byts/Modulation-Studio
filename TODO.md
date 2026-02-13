@@ -1,5 +1,13 @@
 # Modulation Studio TODO
 
+## Audit Remediation (2026-02-13)
+- [x] 1) Security hardening: remove third-party runtime CDN dependencies and add CSP/security headers on all deploy targets.
+- [x] 2) Docs correctness: update README to reflect modular `js/` architecture and current startup workflow.
+- [x] 3) Tooling compatibility: align scripts so `npm run dev` works without requiring Bun.
+- [x] 4) Maintainability: replace hardcoded sample-rate literals with shared `SAMPLE_RATE` constant.
+- [x] 5) Refactor cleanup: remove unused function parameters and stale API surface.
+- [x] 6) Review pass: run smoke checks and re-audit diffs before commit.
+
 ## Completed
 - [x] Deployable production-style UI redesign
 - [x] Modulation family taxonomy + scheme drill-down
