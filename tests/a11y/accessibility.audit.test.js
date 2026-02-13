@@ -65,6 +65,8 @@ describe("accessibility audit checks", () => {
     expect(STYLES.includes("input:focus-visible")).toBe(true);
     expect(STYLES.includes("select:focus-visible")).toBe(true);
     expect(STYLES.includes(".topnav a:focus-visible")).toBe(true);
+    expect(STYLES.includes("#family")).toBe(true);
+    expect(STYLES.includes("scroll-margin-top")).toBe(true);
   });
 
   it("keeps core foreground/background contrast within accessible bounds", () => {

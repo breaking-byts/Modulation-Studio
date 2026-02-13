@@ -102,6 +102,11 @@
   outline: none;
 }
 
+/* Keep skip-link jumps to first control from pinning too close to viewport top. */
+#family {
+  scroll-margin-top: 140px;
+}
+
 html {
   scroll-behavior: smooth;
 }
