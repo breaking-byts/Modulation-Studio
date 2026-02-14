@@ -2,7 +2,30 @@ import { SAMPLE_RATE } from './config.js';
 import { movingAverage, unwrapPhase, coherentIQ } from './utils.js';
 import { applyChannel } from './signal-core.js';
 
+const ANALOG_SCHEMES = new Set(['am_dsb_lc', 'am_dsb_sc', 'fm', 'pm']);
+
+function assertFinite(name, value) {
+  if (!Number.isFinite(value)) {
+    throw new Error(`Invalid parameter: ${name}`);
+  }
+}
+
 export function generateAnalog(t, params, schemeId, baseband) {
+  if (!ANALOG_SCHEMES.has(schemeId)) {
+    throw new Error(`Unsupported analog scheme: ${schemeId}`);
+  }
+  if (!Array.isArray(t) || !Array.isArray(baseband) || t.length !== baseband.length) {
+    throw new Error('Analog generation requires equally sized time/baseband arrays.');
+  }
+
+  assertFinite('carrierFreq', params.carrierFreq);
+  assertFinite('carrierAmp', params.carrierAmp);
+  assertFinite('messageFreq', params.messageFreq);
+  assertFinite('modIndex', params.modIndex);
+  assertFinite('freqDev', params.freqDev);
+  assertFinite('receiverFc', params.receiverFc);
+  assertFinite('receiverPhase', params.receiverPhase);
+
   const basebandPeak = Math.max(1e-9, ...baseband.map((x) => Math.abs(x)));
   const mn = baseband.map((x) => x / basebandPeak);
   const txSignal = new Array(t.length).fill(0);

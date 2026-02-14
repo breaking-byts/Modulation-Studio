@@ -212,6 +212,6 @@ export const allSchemes = modulationFamilies.flatMap((family) =>
 export const levelToBitsMap = {
   "-3": [0, 0],
   "-1": [0, 1],
-  1: [1, 1],
-  3: [1, 0],
+  "1": [1, 1],
+  "3": [1, 0],
 };

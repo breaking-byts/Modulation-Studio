@@ -1,23 +1,13 @@
 import { SAMPLE_RATE } from './config.js';
 import { coherentIQ, unwrapPhase } from './utils.js';
 
-let gaussSpare;
-
 function gaussianRandom() {
-  if (gaussSpare !== undefined) {
-    const value = gaussSpare;
-    gaussSpare = undefined;
-    return value;
-  }
-
   let u = 0;
   let v = 0;
   while (u === 0) u = Math.random();
   while (v === 0) v = Math.random();
 
-  const mag = Math.sqrt(-2 * Math.log(u));
-  gaussSpare = mag * Math.sin(2 * Math.PI * v);
-  return mag * Math.cos(2 * Math.PI * v);
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
 export function signalPower(signal) {
@@ -26,16 +16,25 @@ export function signalPower(signal) {
 }
 
 export function applyChannel(signal, t, channel) {
+  if (!Array.isArray(signal) || !signal.length) return [];
+  const safeChannel = channel && typeof channel === 'object' ? channel : {};
+  const fadingDepth = clampValue(
+    Number.isFinite(safeChannel.fadingDepth) ? safeChannel.fadingDepth : 0,
+    0,
+    0.95,
+  );
+  const snrDb = Number.isFinite(safeChannel.snrDb) ? safeChannel.snrDb : 30;
   const fadeHz = 2;
   const faded = signal.map((s, idx) => {
+    const time = Number.isFinite(t?.[idx]) ? t[idx] : idx / SAMPLE_RATE;
     const envelope =
-      1 - channel.fadingDepth +
-      channel.fadingDepth * (0.5 + 0.5 * Math.sin(2 * Math.PI * fadeHz * t[idx]));
+      1 - fadingDepth +
+      fadingDepth * (0.5 + 0.5 * Math.sin(2 * Math.PI * fadeHz * time));
     return s * envelope;
   });
 
   const pow = Math.max(1e-10, signalPower(faded));
-  const snrLinear = Math.pow(10, channel.snrDb / 10);
+  const snrLinear = Math.pow(10, snrDb / 10);
   const noiseVar = pow / Math.max(1e-9, snrLinear);
   const noiseStd = Math.sqrt(noiseVar);
 
@@ -55,8 +54,15 @@ export function bitsToWaveform(bits, bitSamples) {
 }
 
 export function integrateSegment(signal, start, end, tone) {
+  if (!Array.isArray(signal) || typeof tone !== 'function') return 0;
+  const from = clampValue(Math.floor(start), 0, signal.length);
+  const to = clampValue(Math.floor(end), 0, signal.length);
+  if (to <= from) return 0;
+
   let sum = 0;
-  for (let i = start; i < end; i += 1) sum += signal[i] * tone(i);
+  for (let i = from; i < to; i += 1) {
+    sum += signal[i] * tone(i);
+  }
   return sum;
 }
 

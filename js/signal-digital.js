@@ -10,7 +10,23 @@ import {
   randomBits,
 } from './signal-core.js';
 
+const DIGITAL_SCHEMES = new Set(['ask', 'fsk', 'bpsk', 'qpsk', 'qam16']);
+
 export function generateDigital(t, params, schemeId, bitPool, levelToBitsMap) {
+  if (!DIGITAL_SCHEMES.has(schemeId)) {
+    throw new Error(`Unsupported digital scheme: ${schemeId}`);
+  }
+  if (!Array.isArray(t)) {
+    throw new Error('Digital generation requires a time array.');
+  }
+  if (!Number.isFinite(params?.bitRate) || params.bitRate <= 0) {
+    throw new Error('Invalid parameter: bitRate');
+  }
+  if (!Number.isFinite(params?.carrierFreq) || !Number.isFinite(params?.carrierAmp)) {
+    throw new Error('Invalid carrier parameters for digital generation.');
+  }
+  const safeLevelToBitsMap = levelToBitsMap && typeof levelToBitsMap === 'object' ? levelToBitsMap : {};
+
   const bitSamples = Math.max(4, Math.floor(SAMPLE_RATE / params.bitRate));
   const bitCount = Math.max(16, Math.floor(t.length / bitSamples));
   const neededBits = bitCount * 4 + 32;
@@ -59,7 +75,7 @@ export function generateDigital(t, params, schemeId, bitPool, levelToBitsMap) {
       txSymbols.push(String(sourceBits[b]));
     }
 
-    const threshold = (Math.max(...comps) + Math.min(...comps)) / 2;
+    const threshold = comps.length ? (Math.max(...comps) + Math.min(...comps)) / 2 : 0;
 
     for (let b = 0; b < comps.length; b += 1) {
       const start = receiver.timingOffset + b * bitSamples;
@@ -291,8 +307,8 @@ export function generateDigital(t, params, schemeId, bitPool, levelToBitsMap) {
 
     const iHat = quantizeLevel(iComp / norm);
     const qHat = quantizeLevel(qComp / norm);
-    const iBits = levelToBitsMap[String(iHat)] || [0, 0];
-    const qBits = levelToBitsMap[String(qHat)] || [0, 0];
+    const iBits = safeLevelToBitsMap[String(iHat)] || [0, 0];
+    const qBits = safeLevelToBitsMap[String(qHat)] || [0, 0];
 
     rxBits.push(iBits[0], iBits[1], qBits[0], qBits[1]);
     rxSymbols.push(`${iHat},${qHat}`);
