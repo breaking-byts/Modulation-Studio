@@ -1,8 +1,18 @@
 export function initGsapAnimations() {
-  if (typeof gsap !== 'undefined') {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const sections = document.querySelectorAll('[data-section]');
+  if (prefersReducedMotion) {
+    sections.forEach((section) => {
+      section.style.opacity = '1';
+      section.style.transform = 'none';
+    });
+  } else if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
     gsap.registerPlugin(ScrollTrigger);
 
-    const sections = document.querySelectorAll('[data-section]');
     gsap.to(sections, {
       opacity: 1,
       y: 0,
