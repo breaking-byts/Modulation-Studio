@@ -4,13 +4,14 @@ import {
   basebandSignals,
   defaultControls,
   scenarioPresets,
-  colors,
   allSchemes,
   SAMPLE_RATE,
 } from './config.js';
-import { renderLatex, clamp, formatHz, nowStamp, linspace, normalize } from './utils.js';
+import { renderLatex, clamp, formatHz, linspace, normalize, nowStamp } from './utils.js';
 import { generateAnalog, generateDigital, randomBits, computeBitErrorRate, computeSymbolErrorRate, computeCorrelation } from './signal.js';
 import { renderPlots } from './render.js';
+import { exportCurrentCsv, exportCurrentPng } from './ui-exports.js';
+import { initGsapAnimations } from './ui-animations.js';
 
 const els = {
   family: document.getElementById("family"),
@@ -131,64 +132,92 @@ export function populateCompareSelector() {
 }
 
 export function renderTaxonomy() {
-  els.taxonomy.innerHTML = modulationFamilies
-    .map(
-      (family) =>
-        `<div class="taxonomy-row"><strong>${family.name}</strong>${family.schemes
-          .map((scheme) => scheme.label)
-          .join(" • ")}</div>`,
-    )
-    .join("");
+  els.taxonomy.replaceChildren();
+
+  modulationFamilies.forEach((family) => {
+    const row = document.createElement('div');
+    row.className = 'taxonomy-row';
+
+    const title = document.createElement('strong');
+    title.textContent = family.name;
+    row.appendChild(title);
+    row.appendChild(document.createTextNode(family.schemes.map((scheme) => scheme.label).join(' • ')));
+
+    els.taxonomy.appendChild(row);
+  });
 }
 
 export function renderAtlas() {
-  els.atlas.innerHTML = modulationFamilies
-    .map(
-      (family) => `
-      <article class="atlas-card">
-        <h3>${family.name}</h3>
-        <ul>
-          ${family.schemes
-          .map(
-            (scheme) =>
-              `<li><strong>${scheme.label}</strong><span class="eq">${renderLatex(scheme.modulationEq)}</span><span class="eq">${renderLatex(scheme.demodEq)}</span></li>`,
-          )
-          .join("")}
-        </ul>
-      </article>
-    `,
-    )
-    .join("");
+  els.atlas.replaceChildren();
+
+  modulationFamilies.forEach((family) => {
+    const card = document.createElement('article');
+    card.className = 'atlas-card';
+
+    const heading = document.createElement('h3');
+    heading.textContent = family.name;
+    card.appendChild(heading);
+
+    const list = document.createElement('ul');
+    family.schemes.forEach((scheme) => {
+      const item = document.createElement('li');
+
+      const strong = document.createElement('strong');
+      strong.textContent = scheme.label;
+      item.appendChild(strong);
+
+      const modEq = document.createElement('span');
+      modEq.className = 'eq';
+      modEq.innerHTML = renderLatex(scheme.modulationEq);
+      item.appendChild(modEq);
+
+      const demodEq = document.createElement('span');
+      demodEq.className = 'eq';
+      demodEq.innerHTML = renderLatex(scheme.demodEq);
+      item.appendChild(demodEq);
+
+      list.appendChild(item);
+    });
+
+    card.appendChild(list);
+    els.atlas.appendChild(card);
+  });
 }
 
 export function renderLegend(compareActive, primaryScheme, compareScheme) {
   const items = [
-    { color: colors.primaryBase, label: `Primary Baseband (${primaryScheme.label})` },
-    { color: colors.primaryRx, label: `Primary Received (${primaryScheme.label})` },
-    { color: colors.primaryDemod, label: `Primary Demod (${primaryScheme.label})` },
-    { color: colors.spectrumPrimary, label: `Primary Spectrum (${primaryScheme.label})` },
+    { token: 'primary-base', label: `Primary Baseband (${primaryScheme.label})` },
+    { token: 'primary-rx', label: `Primary Received (${primaryScheme.label})` },
+    { token: 'primary-demod', label: `Primary Demod (${primaryScheme.label})` },
+    { token: 'spectrum-primary', label: `Primary Spectrum (${primaryScheme.label})` },
   ];
 
   if (compareActive && compareScheme) {
-    items.push({ color: colors.compareBase, label: `Compare Baseband (${compareScheme.label})` });
-    items.push({ color: colors.compareRx, label: `Compare Received (${compareScheme.label})` });
-    items.push({ color: colors.compareDemod, label: `Compare Demod (${compareScheme.label})` });
-    items.push({ color: colors.spectrumCompare, label: `Compare Spectrum (${compareScheme.label})` });
+    items.push({ token: 'compare-base', label: `Compare Baseband (${compareScheme.label})` });
+    items.push({ token: 'compare-rx', label: `Compare Received (${compareScheme.label})` });
+    items.push({ token: 'compare-demod', label: `Compare Demod (${compareScheme.label})` });
+    items.push({ token: 'spectrum-compare', label: `Compare Spectrum (${compareScheme.label})` });
   }
 
   if (primaryScheme.digital) {
-    items.push({ color: colors.constellationPrimary, label: `Primary Constellation (${primaryScheme.label})` });
+    items.push({ token: 'constellation-primary', label: `Primary Constellation (${primaryScheme.label})` });
   }
   if (compareActive && compareScheme?.digital) {
-    items.push({ color: colors.constellationCompare, label: `Compare Constellation (${compareScheme.label})` });
+    items.push({ token: 'constellation-compare', label: `Compare Constellation (${compareScheme.label})` });
   }
 
-  els.plotLegend.innerHTML = items
-    .map(
-      (item) =>
-        `<span class="legend-chip"><span class="legend-dot" style="background:${item.color}"></span>${item.label}</span>`,
-    )
-    .join("");
+  els.plotLegend.replaceChildren();
+  items.forEach((item) => {
+    const chip = document.createElement('span');
+    chip.className = 'legend-chip';
+
+    const dot = document.createElement('span');
+    dot.className = `legend-dot legend-dot--${item.token}`;
+    chip.appendChild(dot);
+    chip.appendChild(document.createTextNode(item.label));
+
+    els.plotLegend.appendChild(chip);
+  });
 }
 
 export function loadPresetsFromStorage() {
@@ -422,114 +451,6 @@ function formatMetricText(result, scheme) {
   return `Correlation(baseband, demod): ${corr.toFixed(4)}`;
 }
 
-function exportCurrentCsv() {
-  if (!lastRenderData) {
-    setStatus("error", "Nothing to export yet. Run a simulation first.");
-    return;
-  }
-
-  const { time, primary, compare } = lastRenderData;
-  const headers = [
-    "time_s",
-    "primary_baseband",
-    "primary_rx",
-    "primary_demod",
-    "compare_baseband",
-    "compare_rx",
-    "compare_demod",
-  ];
-
-  const rows = [headers.join(",")];
-  for (let i = 0; i < time.length; i += 1) {
-    const row = [
-      time[i],
-      primary.baseband[i] ?? "",
-      primary.rxSignal[i] ?? "",
-      primary.demodulated[i] ?? "",
-      compare ? compare.baseband[i] ?? "" : "",
-      compare ? compare.rxSignal[i] ?? "" : "",
-      compare ? compare.demodulated[i] ?? "" : "",
-    ];
-    rows.push(row.join(","));
-  }
-
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `modulation-signals-${nowStamp()}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  setStatus("success", "CSV exported.");
-}
-
-function exportCurrentPng() {
-  if (!lastRenderData) {
-    setStatus("error", "Nothing to export yet. Run a simulation first.");
-    return;
-  }
-
-  const blocks = [
-    { title: "Baseband", canvas: els.basebandCanvas },
-    { title: "Received", canvas: els.modulatedCanvas },
-    { title: "Demodulated", canvas: els.demodulatedCanvas },
-    { title: "Spectrum", canvas: els.spectrumCanvas },
-  ];
-
-  if (els.constellationPanel.style.display !== "none") {
-    blocks.push({ title: "Constellation", canvas: els.constellationCanvas });
-  }
-
-  const cols = 2;
-  const rows = Math.ceil(blocks.length / cols);
-  const tileW = 760;
-  const tileH = 310;
-  const pad = 20;
-  const header = 70;
-
-  const out = document.createElement("canvas");
-  out.width = cols * tileW + (cols + 1) * pad;
-  out.height = header + rows * tileH + (rows + 1) * pad;
-  const ctx = out.getContext("2d");
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, out.width, out.height);
-  ctx.fillStyle = "#102446";
-  ctx.font = "600 28px Space Grotesk, sans-serif";
-  ctx.fillText("Modulation Studio Export", pad, 38);
-  ctx.fillStyle = "#4f5e7f";
-  ctx.font = "15px IBM Plex Sans, sans-serif";
-  ctx.fillText(`Generated: ${new Date().toLocaleString()}`, pad, 60);
-
-  blocks.forEach((block, idx) => {
-    const col = idx % cols;
-    const row = Math.floor(idx / cols);
-    const x = pad + col * (tileW + pad);
-    const y = header + pad + row * (tileH + pad);
-
-    ctx.fillStyle = "#f7faff";
-    ctx.fillRect(x, y, tileW, tileH);
-    ctx.strokeStyle = "#d8e3f6";
-    ctx.strokeRect(x, y, tileW, tileH);
-
-    ctx.fillStyle = "#17325f";
-    ctx.font = "600 17px Space Grotesk, sans-serif";
-    ctx.fillText(block.title, x + 12, y + 24);
-
-    ctx.drawImage(block.canvas, x + 12, y + 36, tileW - 24, tileH - 48);
-  });
-
-  const a = document.createElement("a");
-  a.href = out.toDataURL("image/png");
-  a.download = `modulation-plots-${nowStamp()}.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setStatus("success", "PNG exported.");
-}
-
 export function render(levelToBitsMap) {
   if (renderFrameId !== null) {
     cancelAnimationFrame(renderFrameId);
@@ -672,8 +593,8 @@ export function bindEvents(levelToBitsMap) {
     }
   });
 
-  els.exportCsv.addEventListener("click", exportCurrentCsv);
-  els.exportPng.addEventListener("click", exportCurrentPng);
+  els.exportCsv.addEventListener('click', () => exportCurrentCsv(lastRenderData, setStatus));
+  els.exportPng.addEventListener('click', () => exportCurrentPng(lastRenderData, els, setStatus));
 
   els.starterPresetBtn.addEventListener("click", () => {
     applyScenario("offsetQpsk", levelToBitsMap);
@@ -686,45 +607,4 @@ export function bindEvents(levelToBitsMap) {
   });
 }
 
-export function initGsapAnimations() {
-  if (typeof gsap !== "undefined") {
-    gsap.registerPlugin(ScrollTrigger);
-
-    const sections = document.querySelectorAll("[data-section]");
-    gsap.to(sections, {
-      opacity: 1,
-      y: 0,
-      duration: 0.5,
-      stagger: 0.1,
-      ease: "power2.out",
-      delay: 0.1
-    });
-
-    const heroH1 = document.querySelector(".hero-copy h1");
-    if (heroH1) {
-      const glitchTL = gsap.timeline({ delay: 0.8 });
-      glitchTL
-        .to(heroH1, { x: -2, y: 1, textShadow: "2px 0 #ff003c, -2px 0 #00fff2", duration: 0.08, ease: "power4.in" })
-        .to(heroH1, { x: 2, y: -1, textShadow: "-2px 0 #ff003c, 2px 0 #00fff2", duration: 0.08, ease: "power4.out" })
-        .to(heroH1, { x: -1, y: 2, duration: 0.06, ease: "none" })
-        .to(heroH1, { x: 0, y: 0, textShadow: "none", duration: 0.1, ease: "power2.out" });
-    }
-
-    sections.forEach((el) => {
-      ScrollTrigger.create({
-        trigger: el,
-        start: "top 88%",
-        once: true,
-        onEnter: () => {
-          gsap.to(el, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" });
-        }
-      });
-    });
-  }
-
-  window.addEventListener("scroll", () => {
-    document.body.classList.toggle("scrolled", window.scrollY > 40);
-  }, { passive: true });
-}
-
-export { els };
+export { els, initGsapAnimations };

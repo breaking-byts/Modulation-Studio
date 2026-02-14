@@ -1,7 +1,8 @@
 export function renderLatex(latex) {
   if (typeof katex === "undefined") return latex;
   try {
-    return katex.renderToString(latex, { throwOnError: false, displayMode: false });
+    const rendered = katex.renderToString(latex, { throwOnError: false, displayMode: false });
+    return rendered.replace(/\sstyle=\"[^\"]*\"/g, "");
   } catch (_e) {
     return latex;
   }
@@ -85,24 +86,72 @@ export function nearestPowerOf2(n) {
   return p;
 }
 
+function bitReverse(index, bits) {
+  let reversed = 0;
+  for (let i = 0; i < bits; i += 1) {
+    reversed = (reversed << 1) | ((index >> i) & 1);
+  }
+  return reversed;
+}
+
+function fftInPlace(real, imag) {
+  const n = real.length;
+  const bits = Math.log2(n);
+
+  for (let i = 0; i < n; i += 1) {
+    const j = bitReverse(i, bits);
+    if (j > i) {
+      [real[i], real[j]] = [real[j], real[i]];
+      [imag[i], imag[j]] = [imag[j], imag[i]];
+    }
+  }
+
+  for (let len = 2; len <= n; len *= 2) {
+    const half = len / 2;
+    const step = (-2 * Math.PI) / len;
+
+    for (let i = 0; i < n; i += len) {
+      for (let j = 0; j < half; j += 1) {
+        const angle = j * step;
+        const wr = Math.cos(angle);
+        const wi = Math.sin(angle);
+        const k = i + j;
+        const l = k + half;
+
+        const tr = wr * real[l] - wi * imag[l];
+        const ti = wr * imag[l] + wi * real[l];
+
+        real[l] = real[k] - tr;
+        imag[l] = imag[k] - ti;
+        real[k] += tr;
+        imag[k] += ti;
+      }
+    }
+  }
+}
+
 export function computeSpectrum(signal, sampleRate) {
+  if (signal.length < 2) {
+    return { freq: [], magDb: [] };
+  }
+
   const n = Math.min(512, nearestPowerOf2(signal.length));
+  if (n < 2) {
+    return { freq: [], magDb: [] };
+  }
+
   const x = signal.slice(0, n).map((v, i) => {
     const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (n - 1)));
     return v * w;
   });
+  const real = x.slice();
+  const imag = new Array(n).fill(0);
+  fftInPlace(real, imag);
 
   const freq = [];
   const magDb = [];
   for (let k = 0; k < n / 2; k += 1) {
-    let re = 0;
-    let im = 0;
-    for (let m = 0; m < n; m += 1) {
-      const angle = (-2 * Math.PI * k * m) / n;
-      re += x[m] * Math.cos(angle);
-      im += x[m] * Math.sin(angle);
-    }
-    const mag = Math.sqrt(re * re + im * im) / n;
+    const mag = Math.sqrt(real[k] * real[k] + imag[k] * imag[k]) / n;
     freq.push((k * sampleRate) / n);
     magDb.push(20 * Math.log10(mag + 1e-8));
   }

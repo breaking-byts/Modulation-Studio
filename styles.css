@@ -833,6 +833,46 @@ button:focus-visible,
   border-radius: 1px;
 }
 
+.legend-dot--primary-base {
+  background: #00ff9c;
+}
+
+.legend-dot--compare-base {
+  background: #ff9c00;
+}
+
+.legend-dot--primary-rx {
+  background: #00e676;
+}
+
+.legend-dot--compare-rx {
+  background: #ffab40;
+}
+
+.legend-dot--primary-demod {
+  background: #40c4ff;
+}
+
+.legend-dot--compare-demod {
+  background: #ea80fc;
+}
+
+.legend-dot--spectrum-primary {
+  background: #00ff9c;
+}
+
+.legend-dot--spectrum-compare {
+  background: #ff9c00;
+}
+
+.legend-dot--constellation-primary {
+  background: #00ff9c;
+}
+
+.legend-dot--constellation-compare {
+  background: #ff9c00;
+}
+
 /* Taxonomy */
 .taxonomy {
   display: grid;
@@ -1180,23 +1220,6 @@ canvas:hover {
   [data-section] {
     opacity: 1;
     transform: none;
-  }
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 1080px) {
-  .hero {
-    grid-template-columns: 1fr;
-  }
-
-  .studio-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .atlas-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 

@@ -79,8 +79,13 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
 ├── index.html         # Main entry point
 ├── js/
 │   ├── main.js        # App bootstrap and initialization
-│   ├── ui.js          # UI state, controls, and event binding
-│   ├── signal.js      # Modulation, channel, and demodulation logic
+│   ├── ui.js          # UI orchestration, state, and event binding
+│   ├── ui-exports.js  # CSV/PNG export services
+│   ├── ui-animations.js # GSAP animation bootstrap
+│   ├── signal.js      # Public signal API surface
+│   ├── signal-core.js # Channel model, receiver sync, error metrics
+│   ├── signal-analog.js # Analog modulation/demodulation implementations
+│   ├── signal-digital.js # Digital modulation/demodulation implementations
 │   ├── render.js      # Canvas drawing and plot composition
 │   ├── utils.js       # Shared math and helper utilities
 │   └── config.js      # Schemes, defaults, and constants

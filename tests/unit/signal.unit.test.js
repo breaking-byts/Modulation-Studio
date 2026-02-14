@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SAMPLE_RATE, levelToBitsMap } from "../../js/config.js";
-import { linspace, normalize } from "../../js/utils.js";
+import { computeSpectrum, linspace, normalize, renderLatex } from "../../js/utils.js";
 import {
   computeBitErrorRate,
   computeCorrelation,
@@ -63,6 +63,36 @@ describe("signal simulation correctness", () => {
     expect(ber.rate).toBeLessThan(0.03);
   });
 
+  it("recovers QPSK symbols with low BER in a clean coherent link", () => {
+    const params = makeParams({
+      carrierFreq: 300,
+      bitRate: 260,
+      duration: 0.14,
+      snrDb: 55,
+    });
+    const t = linspace(params.duration, SAMPLE_RATE);
+    const bitPool = deterministicBits(50000);
+    const result = generateDigital(t, params, "qpsk", bitPool, levelToBitsMap);
+    const ber = computeBitErrorRate(result.txBits, result.rxBits);
+    expect(ber.total).toBeGreaterThan(0);
+    expect(ber.rate).toBeLessThan(0.05);
+  });
+
+  it("recovers 16-QAM symbols with low BER in a clean coherent link", () => {
+    const params = makeParams({
+      carrierFreq: 320,
+      bitRate: 280,
+      duration: 0.16,
+      snrDb: 58,
+    });
+    const t = linspace(params.duration, SAMPLE_RATE);
+    const bitPool = deterministicBits(70000);
+    const result = generateDigital(t, params, "qam16", bitPool, levelToBitsMap);
+    const ber = computeBitErrorRate(result.txBits, result.rxBits);
+    expect(ber.total).toBeGreaterThan(0);
+    expect(ber.rate).toBeLessThan(0.08);
+  });
+
   it("improves BER with adaptive PLL + timing recovery under RX mismatch", () => {
     const base = makeParams({
       carrierFreq: 280,
@@ -95,5 +125,16 @@ describe("signal simulation correctness", () => {
     const berAdaptive = computeBitErrorRate(adaptive.txBits, adaptive.rxBits);
     expect(berAdaptive.total).toBeGreaterThan(0);
     expect(berAdaptive.rate).toBeLessThan(berManual.rate - 0.1);
+  });
+
+  it("returns empty spectrum for undersized signals", () => {
+    const spectrum = computeSpectrum([1], SAMPLE_RATE);
+    expect(spectrum.freq).toEqual([]);
+    expect(spectrum.magDb).toEqual([]);
+  });
+
+  it("strips inline style attributes from rendered latex", () => {
+    const rendered = renderLatex("s(t) = A_c [1 + \\mu \\cdot m_n(t)] \\cos(2\\pi f_c t)");
+    expect(rendered.includes("style=")).toBe(false);
   });
 });
