@@ -13,6 +13,7 @@ import {
 } from './ui.js';
 
 function init() {
+  document.body.classList.add('js');
   ensureUiElements();
   buildSelectors();
   renderTaxonomy();

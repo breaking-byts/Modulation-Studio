@@ -65,6 +65,15 @@ const elementIdByKey = {
   constellationCanvas: "constellationCanvas",
 };
 
+const PRESET_NAME_MAX_LENGTH = 64;
+const PRESET_NAME_PATTERN = /^[\w\-\.]+$/;
+const VALID_PRESET_KEYS = [
+  'family', 'scheme', 'baseband', 'carrierFreq', 'messageFreq', 'carrierAmp',
+  'messageAmp', 'modIndex', 'freqDev', 'bitRate', 'duration', 'snrDb',
+  'fadingDepth', 'rxCarrierOffset', 'rxPhaseOffset', 'receiverModel',
+  'timingRecovery', 'compareMode', 'compareScheme', 'deterministicMode', 'rngSeed'
+];
+
 const els = new Proxy({}, {
   get(_target, prop) {
     const key = typeof prop === 'string' ? prop : '';
@@ -84,6 +93,56 @@ function storageErrorMessage(err) {
     return "Storage limit exceeded. Delete an old preset and try again.";
   }
   return "Unable to save preset data in local storage.";
+}
+
+function normalizePresetName(name) {
+  if (!name || typeof name !== 'string') return '';
+  let normalized = name.trim().toLowerCase();
+  normalized = normalized.replace(/[^a-z0-9\-_.]/g, '-');
+  normalized = normalized.replace(/-+/g, '-');
+  normalized = normalized.replace(/^-+|-+$/g, '');
+  return normalized.slice(0, PRESET_NAME_MAX_LENGTH);
+}
+
+function isValidPresetName(name) {
+  if (!name || typeof name !== 'string') return false;
+  if (name.length > PRESET_NAME_MAX_LENGTH) return false;
+  return PRESET_NAME_PATTERN.test(name);
+}
+
+function sanitizePresetData(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return null;
+  }
+  const sanitized = {};
+  for (const key of VALID_PRESET_KEYS) {
+    if (data[key] !== undefined && data[key] !== null) {
+      const value = data[key];
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        sanitized[key] = value;
+      }
+    }
+  }
+  if (typeof sanitized.family !== 'string' || typeof sanitized.scheme !== 'string') {
+    return null;
+  }
+  return sanitized;
+}
+
+function validateLoadedPresets(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return {};
+  }
+  const validated = {};
+  for (const [name, data] of Object.entries(raw)) {
+    if (isValidPresetName(name)) {
+      const sanitized = sanitizePresetData(data);
+      if (sanitized) {
+        validated[name] = sanitized;
+      }
+    }
+  }
+  return validated;
 }
 
 function getScenarioButtons() {
@@ -255,7 +314,12 @@ export function renderLegend(compareActive, primaryScheme, compareScheme) {
 export function loadPresetsFromStorage() {
   try {
     const raw = localStorage.getItem(PRESET_STORAGE_KEY);
-    savedPresets = raw ? JSON.parse(raw) : {};
+    if (!raw) {
+      savedPresets = {};
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    savedPresets = validateLoadedPresets(parsed);
   } catch (_err) {
     savedPresets = {};
   }
@@ -271,7 +335,7 @@ export function persistPresets() {
 }
 
 export function refreshPresetDropdown() {
-  const names = Object.keys(savedPresets).sort();
+  const names = Object.keys(savedPresets).filter(isValidPresetName).sort();
   els.savedPresetSelect.innerHTML = "";
   if (!names.length) {
     const option = document.createElement("option");
@@ -375,7 +439,14 @@ export function applyScenario(name, levelToBitsMap) {
 
 function saveCurrentPreset() {
   const explicit = els.presetName.value.trim();
-  const name = explicit || `preset-${nowStamp()}`;
+  const rawName = explicit || `preset-${nowStamp()}`;
+  const name = normalizePresetName(rawName);
+  
+  if (!name) {
+    setStatus("error", "Invalid preset name. Use letters, numbers, hyphens, and underscores only.");
+    return;
+  }
+  
   const previous = savedPresets[name];
   savedPresets[name] = currentControlState();
   const persistResult = persistPresets();
@@ -400,14 +471,19 @@ function loadSelectedPreset(levelToBitsMap) {
     setStatus("error", "Select a saved preset first.");
     return;
   }
-  applyControlState(savedPresets[name], false, levelToBitsMap);
+  const sanitizedPreset = sanitizePresetData(savedPresets[name]);
+  if (!sanitizedPreset) {
+    setStatus("error", "Invalid preset data. Preset may be corrupted.");
+    return;
+  }
+  applyControlState(sanitizedPreset, false, levelToBitsMap);
   els.presetName.value = name;
   setStatus("success", `Preset loaded: ${name}`);
 }
 
 function deleteSelectedPreset() {
   const name = els.savedPresetSelect.value;
-  if (!name || !savedPresets[name]) {
+  if (!name || !isValidPresetName(name) || !savedPresets[name]) {
     setStatus("error", "No preset selected for deletion.");
     return;
   }

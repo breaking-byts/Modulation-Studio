@@ -9,7 +9,7 @@ import {
   integrateSegment,
 } from "../../js/signal.js";
 import { setRngSeed, getRngSeed, isDeterministic, random, randomBits } from "../../js/rng.js";
-import { drawLinePlot, drawXYPlot, drawConstellation } from "../../js/render.js";
+import { drawLinePlot, drawXYPlot, drawConstellation, renderPlots } from "../../js/render.js";
 
 function makeCanvasContextStub() {
   return {
@@ -318,5 +318,95 @@ describe("seeded RNG deterministic mode", () => {
     expect(ber1.rate).toBe(ber2.rate);
     expect(ber1.errors).toBe(ber2.errors);
     expect(ber1.total).toBe(ber2.total);
+  });
+});
+
+describe("canvas rendering null guards", () => {
+  it("drawLinePlot handles null canvas gracefully", () => {
+    expect(() => drawLinePlot(null, [{ data: [1, 2, 3], color: "#00ff9c" }])).not.toThrow();
+  });
+
+  it("drawLinePlot handles canvas with zero dimensions", () => {
+    const canvas = { width: 0, height: 0, getContext: vi.fn(() => makeCanvasContextStub()) };
+    expect(() => drawLinePlot(canvas, [{ data: [1, 2, 3], color: "#00ff9c" }])).not.toThrow();
+  });
+
+  it("drawXYPlot handles null canvas gracefully", () => {
+    expect(() => drawXYPlot(null, [[1, 2]], [[3, 4]], ["#00ff9c"])).not.toThrow();
+  });
+
+  it("drawConstellation handles null canvas gracefully", () => {
+    expect(() => drawConstellation(null, [{ color: "#00ff9c", points: [{ i: 1, q: 1 }] }])).not.toThrow();
+  });
+
+  it("renderPlots handles null canvas collection gracefully", () => {
+    expect(() => renderPlots(null, { primary: { baseband: [], rxSignal: [], demodulated: [] } }, {}, null)).not.toThrow();
+  });
+
+  it("renderPlots handles null data gracefully", () => {
+    const canvas = makeCanvas();
+    const cvs = {
+      basebandCanvas: canvas,
+      modulatedCanvas: canvas,
+      demodulatedCanvas: canvas,
+      spectrumCanvas: canvas,
+      constellationCanvas: canvas,
+    };
+    expect(() => renderPlots(cvs, null, {}, null)).not.toThrow();
+    expect(() => renderPlots(cvs, {}, {}, null)).not.toThrow();
+  });
+
+  it("renderPlots handles missing canvas elements gracefully", () => {
+    const data = {
+      primary: { baseband: [1, 2, 3], rxSignal: [1, 2, 3], demodulated: [1, 2, 3] }
+    };
+    expect(() => renderPlots({}, data, {}, null)).not.toThrow();
+    expect(() => renderPlots({ basebandCanvas: null }, data, {}, null)).not.toThrow();
+  });
+
+  it("renderPlots handles empty signal arrays", () => {
+    const canvas = makeCanvas();
+    const cvs = {
+      basebandCanvas: canvas,
+      modulatedCanvas: canvas,
+      demodulatedCanvas: canvas,
+      spectrumCanvas: canvas,
+      constellationCanvas: canvas,
+    };
+    const data = {
+      primary: { baseband: [], rxSignal: [], demodulated: [], constellation: [] }
+    };
+    expect(() => renderPlots(cvs, data, { digital: true }, null)).not.toThrow();
+  });
+});
+
+describe("CSV export sanitization", () => {
+  it("escapes formula injection characters at cell start", () => {
+    const sanitize = (v) => {
+      const FORMULA_INJECTION_CHARS = /^[=+\-@]/;
+      if (v === null || v === undefined) return '';
+      const str = String(v);
+      if (FORMULA_INJECTION_CHARS.test(str)) {
+        return `'${str}`;
+      }
+      return str;
+    };
+
+    expect(sanitize("=SUM(A1:A10)")).toBe("'=SUM(A1:A10)");
+    expect(sanitize("+1+1")).toBe("'+1+1");
+    expect(sanitize("-1+1")).toBe("'-1+1");
+    expect(sanitize("@SUM")).toBe("'@SUM");
+    expect(sanitize("normal text")).toBe("normal text");
+    expect(sanitize("123")).toBe("123");
+  });
+
+  it("handles null and undefined values in CSV cells", () => {
+    const sanitize = (v) => {
+      if (v === null || v === undefined) return '';
+      return String(v);
+    };
+    expect(sanitize(null)).toBe('');
+    expect(sanitize(undefined)).toBe('');
+    expect(sanitize(0)).toBe('0');
   });
 });
