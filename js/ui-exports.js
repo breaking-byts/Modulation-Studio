@@ -1,4 +1,5 @@
 import { nowStamp } from './utils.js';
+import { trackFunctionalEvent } from './analytics.js';
 
 const FORMULA_INJECTION_CHARS = /^[=+\-@]/;
 
@@ -70,6 +71,7 @@ export function exportCurrentCsv(lastRenderData, setStatus) {
     a.remove();
     URL.revokeObjectURL(url);
     setStatus('success', 'CSV exported.');
+    trackFunctionalEvent('export_csv');
   } catch (_e) {
     setStatus('error', 'Failed to create CSV export.');
   }
@@ -162,6 +164,7 @@ export function exportCurrentPng(lastRenderData, els, setStatus) {
     a.click();
     a.remove();
     setStatus('success', 'PNG exported.');
+    trackFunctionalEvent('export_png');
   } catch (_e) {
     setStatus('error', 'Failed to create PNG export.');
   }

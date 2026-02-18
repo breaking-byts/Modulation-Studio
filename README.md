@@ -61,6 +61,23 @@ bun run test:smoke
 bun run test:a11y
 ```
 
+## Runtime Production Controls
+
+The app supports optional runtime configuration through a global object:
+
+```js
+window.__MOD_STUDIO_CONFIG__ = {
+  observabilityEndpoint: "https://example.com/observability",
+  analyticsEndpoint: "https://example.com/analytics",
+  analyticsEnabled: true,
+};
+```
+
+- `observabilityEndpoint` is optional; when omitted, errors/events stay local in structured console logs.
+- `analyticsEnabled` defaults to `false`.
+- `analyticsEndpoint` is optional and only used when `analyticsEnabled: true`.
+- Analytics respects privacy signals (`Do Not Track` and `Global Privacy Control`) and will suppress tracking when enabled.
+
 ## Deployment
 
 Ready for static hosting:
@@ -72,6 +89,14 @@ Ready for static hosting:
 | Netlify | `netlify.toml` included |
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+## Security Headers
+
+`netlify.toml` and `vercel.json` are aligned and include:
+- strict CSP with `img-src 'self'` and `upgrade-insecure-requests`
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- restrictive `Permissions-Policy`
 
 ## Project Structure
 

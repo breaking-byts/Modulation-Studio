@@ -12,6 +12,7 @@ import { generateAnalog, generateDigital, randomBits, computeBitErrorRate, compu
 import { renderPlots } from './render.js';
 import { exportCurrentCsv, exportCurrentPng } from './ui-exports.js';
 import { initGsapAnimations } from './ui-animations.js';
+import { trackFunctionalEvent } from './analytics.js';
 
 const elementIdByKey = {
   family: "family",
@@ -435,6 +436,7 @@ export function applyScenario(name, levelToBitsMap) {
   }
   applyControlState(scenario, false, levelToBitsMap);
   setStatus("success", `Scenario applied: ${name}`);
+  trackFunctionalEvent('scenario_applied', { scenario: name });
 }
 
 function saveCurrentPreset() {
@@ -463,6 +465,7 @@ function saveCurrentPreset() {
   els.savedPresetSelect.value = name;
   els.presetName.value = name;
   setStatus("success", `Preset saved: ${name}`);
+  trackFunctionalEvent('preset_saved', { presetName: name });
 }
 
 function loadSelectedPreset(levelToBitsMap) {
